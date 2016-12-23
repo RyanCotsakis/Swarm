@@ -1,5 +1,5 @@
 import pygame
-
+from random import randint
 
 #GAME INITIATION
 
@@ -32,9 +32,14 @@ shootPress = False
 
 bullets = []
 blockers = []
+zombies = []
+zombieCount = 0
+timeBetweenZombies = 3000
+zombieSpeed = 4
 
 heroAccel = .5
 heroRadius = 10
+mapSize = [200*heroRadius,100*heroRadius] #todo: implement this
 
 #DEFINE OBJECTS
 
@@ -45,14 +50,6 @@ class Hero:
 		self.vx = xVel
 		self.vy = yVel
 		self.direction = direction
-
-	def setPosition(self, x, y):
-		self.x = x
-		self.y = y
-
-	def setVelocity(self, x, y):
-		self.vx = x
-		self.vy = y
 
 	def shoot(self):
 		bulletSpeed = 5
@@ -66,7 +63,11 @@ class Hero:
 			bullets.append(Bullet(self.x-heroRadius, self.y, self.vx-bulletSpeed, self.vy))
 
 	def placeBlocker(self):
-		blockers.append(Blocker(self.x, self.y))
+		newBlock = Blocker(self.x,self.y)
+		for blocker in blockers:
+			if newBlock.isOn(blocker):
+				return
+		blockers.append(newBlock)
 
 	def draw(self):
 		# Head
@@ -108,6 +109,80 @@ class Hero:
 			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y - 7], [self.x - 2*heroRadius, self.y - 7], 3)
 			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y + 7], [self.x - 2*heroRadius, self.y + 7], 3)
 
+class Zombie:
+	def __init__(self, hero):
+		side = randint(0,3)
+		if side == N:
+			self.x = randint(0,screenSize[0])
+			self.y = -heroRadius
+		elif side == E:
+			self.y = randint(0,screenSize[1])
+			self.x = screenSize[0]+heroRadius
+		elif side == S:
+			self.x = randint(0,screenSize[0])
+			self.y = screenSize[1]+heroRadius
+		elif side == W:
+			self.y = randint(0,screenSize[1])
+			self.x = -heroRadius
+		self.hero = hero
+		self.direction = (side+2)%4
+
+	def move(self):
+		vx = int(self.hero.x - self.x)
+		vy = int(self.hero.y - self.y)
+		avx = abs(vx)
+		avy = abs(vy)
+		self.x += (zombieSpeed*vx)/(avx+avy+1)
+		self.y += (zombieSpeed*vy)/(avx+avy+1)
+		if avy > avx and vy > vx:
+			self.direction = S
+		if avx > avy and vx > vy:
+			self.direction = E
+		if avy > avx and vy < vx:
+			self.direction = N
+		if avx > avy and vx < vy:
+			self.direction = W
+
+
+	def draw(self):
+		# Head
+		pygame.draw.ellipse(screen, RED, [self.x-heroRadius, self.y-heroRadius, 2*heroRadius, 2*heroRadius], 0)
+
+		if self.direction == N:
+			# Eyes
+			pygame.draw.ellipse(screen, GREEN, [self.x-9, self.y-7, 4, 4], 0)
+			pygame.draw.ellipse(screen, GREEN, [self.x+5, self.y-7, 4, 4], 0)
+		 
+			# Arms
+			pygame.draw.line(screen, GREEN, [self.x - 7, self.y - heroRadius], [self.x - 7, self.y - 2*heroRadius], 3)
+			pygame.draw.line(screen, GREEN, [self.x + 7, self.y - heroRadius], [self.x + 7, self.y - 2*heroRadius], 3)
+
+		elif self.direction == E:
+			# Eyes
+			pygame.draw.ellipse(screen, GREEN, [self.x+3, self.y-9, 4, 4], 0)
+			pygame.draw.ellipse(screen, GREEN, [self.x+3, self.y+5, 4, 4], 0)
+		 
+			# Arms
+			pygame.draw.line(screen, GREEN, [self.x + heroRadius, self.y - 7], [self.x + 2*heroRadius, self.y - 7], 3)
+			pygame.draw.line(screen, GREEN, [self.x + heroRadius, self.y + 7], [self.x + 2*heroRadius, self.y + 7], 3)
+
+		elif self.direction == S:
+			# Eyes
+			pygame.draw.ellipse(screen, GREEN, [self.x-9, self.y+3, 4, 4], 0)
+			pygame.draw.ellipse(screen, GREEN, [self.x+5, self.y+3, 4, 4], 0)
+		 
+			# Arms
+			pygame.draw.line(screen, GREEN, [self.x - 7, self.y + heroRadius], [self.x - 7, self.y + 2*heroRadius], 3)
+			pygame.draw.line(screen, GREEN, [self.x + 7, self.y + heroRadius], [self.x + 7, self.y + 2*heroRadius], 3)
+
+		elif self.direction == W:
+			# Eyes
+			pygame.draw.ellipse(screen, GREEN, [self.x-7, self.y-9, 4, 4], 0)
+			pygame.draw.ellipse(screen, GREEN, [self.x-7, self.y+5, 4, 4], 0)
+		 
+			# Arms
+			pygame.draw.line(screen, GREEN, [self.x - heroRadius, self.y - 7], [self.x - 2*heroRadius, self.y - 7], 3)
+			pygame.draw.line(screen, GREEN, [self.x - heroRadius, self.y + 7], [self.x - 2*heroRadius, self.y + 7], 3)
 
 class Bullet:
 	def __init__(self, xPos, yPos, xVel, yVel):
@@ -133,14 +208,31 @@ class Bullet:
 		if self.health <= 0:
 			self.isAlive = False
 
+	def move(self):
+		self.x += self.vx
+		self.y += self.vy
+
+		if self.x <= 0:
+			self.reflectX()
+			self.x = 1
+		if self.x >= screenSize[0]:
+			self.reflectX()
+			self.x = screenSize[0]-1
+		if self.y <= 0:
+			self.reflectY()
+			self.y = 1
+		if self.y >= screenSize[1]:
+			self.reflectY()
+			self.y = screenSize[1]-1
+
 	def draw(self):
 		pygame.draw.ellipse(screen, GREEN, [self.x, self.y, 5, 5], 0)
 
 
 class Blocker:
 	def __init__(self, xPos, yPos):
-		self.x = xPos
-		self.y = yPos
+		self.x = xPos-xPos%(3*heroRadius)
+		self.y = yPos-yPos%(3*heroRadius)
 		self.health = 2
 		self.isAlive = True
 
@@ -150,7 +242,12 @@ class Blocker:
 			self.isAlive = False
 
 	def draw(self):
-		pygame.draw.rect(screen, WHITE, [self.x, self.y, 10, 10], 0)
+		pygame.draw.rect(screen, GREY, [self.x, self.y, 3*heroRadius-2, 3*heroRadius-2], 0)
+
+	def isOn(self, that):
+		if self.x == that.x and self.y == that.y:
+			return True
+
 
 #PLACE OBJECTS
 
@@ -217,6 +314,8 @@ while not gameOver:
 				shootPress = False
 		
 	#MAKE CHANGES
+
+	#move hero
 	if not shootPress:
 		if leftPress:
 			hero.vx -= heroAccel
@@ -225,7 +324,8 @@ while not gameOver:
 		if upPress:
 			hero.vy -= heroAccel
 		if downPress:
-			hero.vy += heroAccel  
+			hero.vy += heroAccel
+
 	hero.x += hero.vx
 	hero.y += hero.vy
 
@@ -238,39 +338,50 @@ while not gameOver:
 	if hero.x >= screenSize[0]:
 		hero.x = screenSize[0]-1
 		hero.vx = 0
-	if hero.y > screenSize[1]:
+	if hero.y >= screenSize[1]:
 		hero.y = screenSize[1]-1
 		hero.vy = 0
 
+	#move bullets
 	for i, bullet in enumerate(bullets):
-		bullets[i].x += bullet.vx
-		bullets[i].y += bullet.vy
-
-		if bullet.x <= 0:
-			bullets[i].reflectX()
-			bullets[i].x = 1
-		if bullet.x >= screenSize[0]:
-			bullets[i].reflectX()
-			bullets[i].x = screenSize[0]-1
-		if bullet.y <= 0:
-			bullets[i].reflectY()
-			bullets[i].y = 1
-		if bullet.y >= screenSize[1]:
-			bullets[i].reflectY()
-			bullets[i].y = screenSize[1]-1
+		bullets[i].move()
 
 		if abs(bullet.x - hero.x) <= heroRadius and abs(bullet.y - hero.y) <= heroRadius:
 			del bullets[i]
+			gameOver = True
+
+	#move zombies
+	if not pygame.time.get_ticks() < timeBetweenZombies * zombieCount:
+		zombies.append(Zombie(hero))
+		zombieCount+=1 
+
+	for i, zombie in enumerate(zombies):
+		zombies[i].move()
+
+		if abs(zombie.x - hero.x) <= 2*heroRadius and abs(zombie.y - hero.y) <= 2*heroRadius:
+			del zombies[i]
+			gameOver = True
+
+		for j, bullet in enumerate(bullets):
+			if abs(bullet.x - zombie.x) <= heroRadius and abs(bullet.y - zombie.y) <= heroRadius:
+				del bullets[j]
+				del zombies[i]
+
+
 
 	#DRAW
 	screen.fill(BLACK)
 
-	hero.draw()
-	for bullet in bullets:
-		bullet.draw()
 	for blocker in blockers:
 		blocker.draw()
-	#draw stuff here (after screen.fill)
+
+	hero.draw()
+
+	for zombie in zombies:
+		zombie.draw()
+
+	for bullet in bullets:
+		bullet.draw()
  
 	#UPDATE
 	pygame.display.flip()
