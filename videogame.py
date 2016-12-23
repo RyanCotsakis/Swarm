@@ -39,7 +39,6 @@ zombieSpeed = 4
 
 heroAccel = .5
 heroRadius = 10
-mapSize = [200*heroRadius,100*heroRadius] #todo: implement this
 
 #DEFINE OBJECTS
 
@@ -251,7 +250,7 @@ class Blocker:
 
 #PLACE OBJECTS
 
-hero = Hero(0,0,0,0,E)
+hero = Hero(screenSize[0]/2,screenSize[1]/2,0,0,E)
 
 #START GAME
 
