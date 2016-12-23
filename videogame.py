@@ -367,8 +367,6 @@ while not gameOver:
 				del bullets[j]
 				del zombies[i]
 
-
-
 	#DRAW
 	screen.fill(BLACK)
 
