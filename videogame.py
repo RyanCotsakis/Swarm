@@ -7,7 +7,7 @@ pygame.init()
 screenSize = [1000,500]
 screen = pygame.display.set_mode(screenSize)
  
-pygame.display.set_caption("My Game")
+pygame.display.set_caption("Swarm")
 
 clock = pygame.time.Clock()
 
@@ -18,7 +18,7 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 GREY = (127,127,127)
-PINK = (255, 127, 127)
+PINK = (255, 192, 203)
 
 N = 0
 E = 1
@@ -45,13 +45,17 @@ timeBetweenZombies = 3000
 timeBetweenPackages = timeBetweenZombies * zombiesBetweenPackage
 zombieSpeed = 2
 
+hudFont = pygame.font.SysFont("Courier New", 12)
+titleFont = pygame.font.SysFont("Courier New", 20)
+
 heroAccel = .5
 heroRadius = 10
 blockerWidth = 3*heroRadius
 bulletSpeed = 5
 missileSpeed = 5
 blockerStrength = 100
-itemsInPackage = 10
+missilesInPackage = 4
+blockersInPackage = 8
 
 #DEFINE OBJECTS
 
@@ -99,8 +103,8 @@ class Hero:
 			pygame.draw.ellipse(screen, RED, [self.x+5, self.y-7, 4, 4], 0)
 		 
 			# Arms
-			pygame.draw.line(screen, RED, [self.x - 7, self.y - heroRadius], [self.x - 7, self.y - 2*heroRadius], 3)
-			pygame.draw.line(screen, RED, [self.x + 7, self.y - heroRadius], [self.x + 7, self.y - 2*heroRadius], 3)
+			pygame.draw.line(screen, RED, [self.x - 7, self.y - heroRadius], [self.x - 7, self.y - 3*heroRadius/2], 3)
+			pygame.draw.line(screen, RED, [self.x + 7, self.y - heroRadius], [self.x + 7, self.y - 3*heroRadius/2], 3)
 
 		elif self.direction == E:
 			# Eyes
@@ -108,8 +112,8 @@ class Hero:
 			pygame.draw.ellipse(screen, RED, [self.x+3, self.y+5, 4, 4], 0)
 		 
 			# Arms
-			pygame.draw.line(screen, RED, [self.x + heroRadius, self.y - 7], [self.x + 2*heroRadius, self.y - 7], 3)
-			pygame.draw.line(screen, RED, [self.x + heroRadius, self.y + 7], [self.x + 2*heroRadius, self.y + 7], 3)
+			pygame.draw.line(screen, RED, [self.x + heroRadius, self.y - 7], [self.x + 3*heroRadius/2, self.y - 7], 3)
+			pygame.draw.line(screen, RED, [self.x + heroRadius, self.y + 7], [self.x + 3*heroRadius/2, self.y + 7], 3)
 
 		elif self.direction == S:
 			# Eyes
@@ -117,8 +121,8 @@ class Hero:
 			pygame.draw.ellipse(screen, RED, [self.x+5, self.y+3, 4, 4], 0)
 		 
 			# Arms
-			pygame.draw.line(screen, RED, [self.x - 7, self.y + heroRadius], [self.x - 7, self.y + 2*heroRadius], 3)
-			pygame.draw.line(screen, RED, [self.x + 7, self.y + heroRadius], [self.x + 7, self.y + 2*heroRadius], 3)
+			pygame.draw.line(screen, RED, [self.x - 7, self.y + heroRadius], [self.x - 7, self.y + 3*heroRadius/2], 3)
+			pygame.draw.line(screen, RED, [self.x + 7, self.y + heroRadius], [self.x + 7, self.y + 3*heroRadius/2], 3)
 
 		elif self.direction == W:
 			# Eyes
@@ -126,8 +130,8 @@ class Hero:
 			pygame.draw.ellipse(screen, RED, [self.x-7, self.y+5, 4, 4], 0)
 		 
 			# Arms
-			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y - 7], [self.x - 2*heroRadius, self.y - 7], 3)
-			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y + 7], [self.x - 2*heroRadius, self.y + 7], 3)
+			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y - 7], [self.x - 3*heroRadius/2, self.y - 7], 3)
+			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y + 7], [self.x - 3*heroRadius/2, self.y + 7], 3)
 
 class CarePackage:
 	def __init__(self, xPos, yPos):
@@ -331,7 +335,7 @@ hero = Hero(screenSize[0]/2,screenSize[1]/2,0,0,E)
 #START GAME
 
 gameOver = False
-
+quit = False
 while not gameOver:
 
 	#EVENT LISTENING
@@ -339,7 +343,7 @@ while not gameOver:
 	for event in pygame.event.get():
 
 		if event.type == pygame.QUIT:
-			gameOver = True
+			quit = True
  
 		elif event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_LEFT:
@@ -408,6 +412,9 @@ while not gameOver:
 
 			elif event.key == pygame.K_d:
 				blockerPress = False
+
+	if quit:
+		break
 		
 	#MAKE CHANGES
 
@@ -454,8 +461,8 @@ while not gameOver:
 	#pick up care packages
 	for package in packages:
 		if abs(package.x - hero.x) <= heroRadius and abs(package.y - hero.y) <= heroRadius:
-			hero.numOfMissiles += itemsInPackage
-			hero.numOfBlockers += itemsInPackage
+			hero.numOfMissiles += missilesInPackage
+			hero.numOfBlockers += blockersInPackage
 			package.isAlive = False
 
 	#move bullets
@@ -463,7 +470,6 @@ while not gameOver:
 		bullet.move()
 
 		if abs(bullet.x - hero.x) <= heroRadius and abs(bullet.y - hero.y) <= heroRadius:
-			bullet.isAlive = False
 			gameOver = True
 
 		for blocker in blockers:
@@ -485,14 +491,14 @@ while not gameOver:
 
 	#move zombies
 	if pygame.time.get_ticks() > timeBetweenZombies * zombieCount:
-		zombies.append(Zombie(hero,zombieSpeed+randint(0,zombieCount/zombiesBetweenPackage)))
-		zombieCount+=1 
+		randomizer = randint(0,zombieCount/zombiesBetweenPackage)*randint(0,zombieCount/zombiesBetweenPackage) * 2 * zombiesBetweenPackage/(zombieCount+1)
+		zombies.append(Zombie(hero,zombieSpeed+randomizer))
+		zombieCount+=1
 
 	for zombie in zombies:
 		zombie.move()
 
 		if abs(zombie.x - hero.x) <= 2*heroRadius and abs(zombie.y - hero.y) <= 2*heroRadius:
-			zombie.isAlive = False
 			gameOver = True
 
 		for bullet in bullets:
@@ -548,9 +554,21 @@ while not gameOver:
 
 	for bullet in bullets:
 		bullet.draw()
- 
+
+	hud = hudFont.render("MISSILES: " + str(hero.numOfMissiles) + "  BLOCKERS: " + str(hero.numOfBlockers), False, WHITE)
+	screen.blit(hud,(5,screenSize[1]-17))
+
+	title = titleFont.render("LEVEL " + str(zombieCount/zombiesBetweenPackage + 1), False, WHITE)
+	screen.blit(title,(screenSize[0]-120, 5))
+
+	if gameOver:
+		title = titleFont.render("GAME OVER", False, WHITE)
+		screen.blit(title,(screenSize[0]/2-50, screenSize[1]/2-20))
+
 	#UPDATE
 	pygame.display.flip()
 	clock.tick(20) #Limit frames per second
 
+if gameOver:
+	pygame.time.wait(2000)
 pygame.quit()
