@@ -29,6 +29,7 @@ rightPress = False
 upPress = False
 downPress = False
 shootPress = False
+blockerPress = False
 
 bullets = []
 blockers = []
@@ -39,6 +40,9 @@ zombieSpeed = 4
 
 heroAccel = .5
 heroRadius = 10
+blockerWidth = 3*heroRadius
+bulletSpeed = 5
+blockerStrength = 100
 
 #DEFINE OBJECTS
 
@@ -51,20 +55,25 @@ class Hero:
 		self.direction = direction
 
 	def shoot(self):
-		bulletSpeed = 5
 		if self.direction == N:
-			bullets.append(Bullet(self.x, self.y-heroRadius, self.vx, self.vy-bulletSpeed))
+			newBullet = Bullet(self.x, self.y-heroRadius, self.vx, self.vy-bulletSpeed)
 		elif self.direction == E:
-			bullets.append(Bullet(self.x+heroRadius, self.y, self.vx+bulletSpeed, self.vy))
+			newBullet = Bullet(self.x+heroRadius, self.y, self.vx+bulletSpeed, self.vy)
 		elif self.direction == S:
-			bullets.append(Bullet(self.x, self.y+heroRadius, self.vx, self.vy+bulletSpeed))
-		elif self.direction == W:
-			bullets.append(Bullet(self.x-heroRadius, self.y, self.vx-bulletSpeed, self.vy))
+			newBullet = Bullet(self.x, self.y+heroRadius, self.vx, self.vy+bulletSpeed)
+		else: #west
+			newBullet = Bullet(self.x-heroRadius, self.y, self.vx-bulletSpeed, self.vy)
+
+		for blocker in blockers:
+			if blocker.contains(newBullet):
+				return
+		bullets.append(newBullet)
+
 
 	def placeBlocker(self):
 		newBlock = Blocker(self.x,self.y)
 		for blocker in blockers:
-			if newBlock.isOn(blocker):
+			if newBlock.isAlready(blocker):
 				return
 		blockers.append(newBlock)
 
@@ -125,14 +134,17 @@ class Zombie:
 			self.x = -heroRadius
 		self.hero = hero
 		self.direction = (side+2)%4
+		self.isAlive = True
 
 	def move(self):
 		vx = int(self.hero.x - self.x)
 		vy = int(self.hero.y - self.y)
 		avx = abs(vx)
 		avy = abs(vy)
-		self.x += (zombieSpeed*vx)/(avx+avy+1)
-		self.y += (zombieSpeed*vy)/(avx+avy+1)
+		self.vx = (zombieSpeed*vx)/(avx+avy+1)
+		self.vy = (zombieSpeed*vy)/(avx+avy+1)
+		self.x += self.vx
+		self.y += self.vy
 		if avy > avx and vy > vx:
 			self.direction = S
 		if avx > avy and vx > vy:
@@ -229,10 +241,11 @@ class Bullet:
 
 
 class Blocker:
+
 	def __init__(self, xPos, yPos):
-		self.x = xPos-xPos%(3*heroRadius)
-		self.y = yPos-yPos%(3*heroRadius)
-		self.health = 2
+		self.x = xPos-xPos%(blockerWidth)
+		self.y = yPos-yPos%(blockerWidth)
+		self.health = blockerStrength
 		self.isAlive = True
 
 	def smash(self):
@@ -241,11 +254,33 @@ class Blocker:
 			self.isAlive = False
 
 	def draw(self):
-		pygame.draw.rect(screen, GREY, [self.x, self.y, 3*heroRadius-2, 3*heroRadius-2], 0)
+		pygame.draw.rect(screen, GREY, [self.x, self.y, blockerWidth-2, blockerWidth-2], 0)
+		if self.health < blockerStrength/2:
+			pygame.draw.line(screen, BLACK, [self.x, self.y], [self.x+blockerWidth, self.y + blockerWidth], 2)
+		if self.health < blockerStrength/4:
+			pygame.draw.line(screen, BLACK, [self.x, self.y + blockerWidth], [self.x+blockerWidth, self.y], 2)
 
-	def isOn(self, that):
+	def isAlready(self, that):
 		if self.x == that.x and self.y == that.y:
 			return True
+		return False
+
+	def contains(self, that):
+		if that.x >= self.x and that.x <= self.x+blockerWidth and that.y >= self.y and that.y <= self.y+blockerWidth:
+			return True
+		return False
+
+	def relativeTo(self, that):
+		if that.x < self.x:
+			return E
+		elif that.x > self.x + blockerWidth:
+			return W
+		elif that.y < self.y:
+			return S
+		elif that.y > self.y + blockerWidth:
+			return N
+		else:
+			print "Error reading position relative to blocker"
 
 
 #PLACE OBJECTS
@@ -294,7 +329,7 @@ while not gameOver:
 				shootPress = True
 
 			elif event.key == pygame.K_d:
-				hero.placeBlocker()
+				blockerPress = True
  
 		elif event.type == pygame.KEYUP:
 			if event.key == pygame.K_LEFT:
@@ -311,8 +346,14 @@ while not gameOver:
 
 			elif event.key == pygame.K_s:
 				shootPress = False
+
+			elif event.key == pygame.K_d:
+				blockerPress = False
 		
 	#MAKE CHANGES
+
+	if blockerPress:
+		hero.placeBlocker()
 
 	#move hero
 	if not shootPress:
@@ -342,29 +383,61 @@ while not gameOver:
 		hero.vy = 0
 
 	#move bullets
-	for i, bullet in enumerate(bullets):
-		bullets[i].move()
+	for bullet in bullets:
+		bullet.move()
 
 		if abs(bullet.x - hero.x) <= heroRadius and abs(bullet.y - hero.y) <= heroRadius:
-			del bullets[i]
+			bullet.isAlive = False
 			gameOver = True
+
+		for blocker in blockers:
+			wasIn = False
+			while blocker.contains(bullet):
+				bullet.x -= bullet.vx
+				bullet.y -= bullet.vy
+				wasIn = True
+			if wasIn:
+				if blocker.relativeTo(bullet) == E or blocker.relativeTo(bullet) == W:
+					bullet.reflectX()
+				else:
+					bullet.reflectY()
 
 	#move zombies
 	if not pygame.time.get_ticks() < timeBetweenZombies * zombieCount:
 		zombies.append(Zombie(hero))
 		zombieCount+=1 
 
-	for i, zombie in enumerate(zombies):
-		zombies[i].move()
+	for zombie in zombies:
+		zombie.move()
 
 		if abs(zombie.x - hero.x) <= 2*heroRadius and abs(zombie.y - hero.y) <= 2*heroRadius:
-			del zombies[i]
+			zombie.isAlive = False
 			gameOver = True
 
-		for j, bullet in enumerate(bullets):
+		for bullet in bullets:
 			if abs(bullet.x - zombie.x) <= heroRadius and abs(bullet.y - zombie.y) <= heroRadius:
-				del bullets[j]
-				del zombies[i]
+				bullet.isAlive = False
+				zombie.isAlive = False
+
+		for blocker in blockers:
+			while blocker.contains(zombie):
+				blocker.smash()
+				zombie.x -= zombie.vx
+				zombie.y -= zombie.vy
+
+	#DELETE STUFF
+
+	for i, bullet in enumerate(bullets):
+		if not bullet.isAlive:
+			del bullets[i]
+
+	for i, zombie in enumerate(zombies):
+		if not zombie.isAlive:
+			del zombies[i]
+
+	for i, blocker in enumerate(blockers):
+		if not blocker.isAlive:
+			del blockers[i]
 
 	#DRAW
 	screen.fill(BLACK)
