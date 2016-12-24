@@ -18,6 +18,7 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 GREY = (127,127,127)
+PINK = (255, 127, 127)
 
 N = 0
 E = 1
@@ -30,19 +31,27 @@ upPress = False
 downPress = False
 shootPress = False
 blockerPress = False
+missilePress = False
 
 bullets = []
 blockers = []
 zombies = []
+missiles = []
+packages = []
 zombieCount = 0
+packageCount = 0
+zombiesBetweenPackage = 10
 timeBetweenZombies = 3000
-zombieSpeed = 4
+timeBetweenPackages = timeBetweenZombies * zombiesBetweenPackage
+zombieSpeed = 2
 
 heroAccel = .5
 heroRadius = 10
 blockerWidth = 3*heroRadius
 bulletSpeed = 5
+missileSpeed = 5
 blockerStrength = 100
+itemsInPackage = 10
 
 #DEFINE OBJECTS
 
@@ -53,6 +62,8 @@ class Hero:
 		self.vx = xVel
 		self.vy = yVel
 		self.direction = direction
+		self.numOfBlockers = 0
+		self.numOfMissiles = 0
 
 	def shoot(self):
 		if self.direction == N:
@@ -76,6 +87,7 @@ class Hero:
 			if newBlock.isAlready(blocker):
 				return
 		blockers.append(newBlock)
+		self.numOfBlockers -= 1
 
 	def draw(self):
 		# Head
@@ -117,8 +129,18 @@ class Hero:
 			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y - 7], [self.x - 2*heroRadius, self.y - 7], 3)
 			pygame.draw.line(screen, RED, [self.x - heroRadius, self.y + 7], [self.x - 2*heroRadius, self.y + 7], 3)
 
+class CarePackage:
+	def __init__(self, xPos, yPos):
+		self.x = xPos
+		self.y = yPos
+		self.isAlive = True
+
+	def draw(self):
+		pygame.draw.ellipse(screen, PINK, [self.x-5,self.y-5,11,11],3)
+
 class Zombie:
-	def __init__(self, hero):
+	def __init__(self, hero, speed):
+		self.speed = speed
 		side = randint(0,3)
 		if side == N:
 			self.x = randint(0,screenSize[0])
@@ -141,8 +163,8 @@ class Zombie:
 		vy = int(self.hero.y - self.y)
 		avx = abs(vx)
 		avy = abs(vy)
-		self.vx = (zombieSpeed*vx)/(avx+avy+1)
-		self.vy = (zombieSpeed*vy)/(avx+avy+1)
+		self.vx = (self.speed*vx)/(avx+avy+1)
+		self.vy = (self.speed*vy)/(avx+avy+1)
 		self.x += self.vx
 		self.y += self.vy
 		if avy > avx and vy > vx:
@@ -153,7 +175,6 @@ class Zombie:
 			self.direction = N
 		if avx > avy and vx < vy:
 			self.direction = W
-
 
 	def draw(self):
 		# Head
@@ -201,23 +222,13 @@ class Bullet:
 		self.y = yPos
 		self.vx = xVel
 		self.vy = yVel
-		self.health = 1
 		self.isAlive = True
-
-	def setPosition(self, x, y):
-		self.x = x
-		self.y = y
 
 	def reflectX(self):
 		self.vx = -self.vx
 	
 	def reflectY(self):
 		self.vy = -self.vy
-
-	def smash(self):
-		self.health -= 1
-		if self.health <= 0:
-			self.isAlive = False
 
 	def move(self):
 		self.x += self.vx
@@ -239,6 +250,37 @@ class Bullet:
 	def draw(self):
 		pygame.draw.ellipse(screen, GREEN, [self.x, self.y, 5, 5], 0)
 
+class Missile:
+	def __init__(self, hero, direction):
+		self.hero = hero
+		self.direction = direction
+		self.isAlive = True
+		self.distance = heroRadius-missileSpeed
+		self.move()
+
+	def move(self):
+		self.distance += missileSpeed
+		if self.direction == N:
+			self.x = self.hero.x
+			self.y = self.hero.y - self.distance
+		elif self.direction == E:
+			self.x = self.hero.x + self.distance
+			self.y = self.hero.y
+		elif self.direction == S:
+			self.x = self.hero.x
+			self.y = self.hero.y + self.distance
+		else:
+			self.x = self.hero.x - self.distance
+			self.y = self.hero.y
+
+		if self.x <= 0 or self.x >= screenSize[0] or self.y <= 0 or self.y >= screenSize[1]:
+			self.isAlive = False
+
+	def draw(self):
+		if self.direction == E or self.direction == W:
+			pygame.draw.line(screen, WHITE, [self.x-4, self.y], [self.x+4, self.y], 3)
+		else:
+			pygame.draw.line(screen, WHITE, [self.x, self.y-4], [self.x, self.y+4], 3)
 
 class Blocker:
 
@@ -257,8 +299,7 @@ class Blocker:
 		pygame.draw.rect(screen, GREY, [self.x, self.y, blockerWidth-2, blockerWidth-2], 0)
 		if self.health < blockerStrength/2:
 			pygame.draw.line(screen, BLACK, [self.x, self.y], [self.x+blockerWidth, self.y + blockerWidth], 2)
-		if self.health < blockerStrength/4:
-			pygame.draw.line(screen, BLACK, [self.x, self.y + blockerWidth], [self.x+blockerWidth, self.y], 2)
+		
 
 	def isAlready(self, that):
 		if self.x == that.x and self.y == that.y:
@@ -306,24 +347,39 @@ while not gameOver:
 				hero.direction = W
 				if shootPress:
 					hero.shoot()
+				if missilePress and hero.numOfMissiles > 0:
+					missiles.append(Missile(hero,W))
+					hero.numOfMissiles -= 1
 
 			elif event.key == pygame.K_RIGHT:
 				rightPress = True
 				hero.direction = E
 				if shootPress:
 					hero.shoot()
+				if missilePress and hero.numOfMissiles > 0:
+					missiles.append(Missile(hero,E))
+					hero.numOfMissiles -= 1
 
 			elif event.key == pygame.K_UP:
 				upPress = True
 				hero.direction = N
 				if shootPress:
 					hero.shoot()
+				if missilePress and hero.numOfMissiles > 0:
+					missiles.append(Missile(hero,N))
+					hero.numOfMissiles -= 1
 
 			elif event.key == pygame.K_DOWN:
 				downPress = True
 				hero.direction = S
 				if shootPress:
 					hero.shoot()
+				if missilePress and hero.numOfMissiles > 0:
+					missiles.append(Missile(hero,S))
+					hero.numOfMissiles -= 1
+
+			elif event.key == pygame.K_a:
+				missilePress = True
 
 			elif event.key == pygame.K_s:
 				shootPress = True
@@ -344,6 +400,9 @@ while not gameOver:
 			elif event.key == pygame.K_DOWN:
 				downPress = False
 
+			elif event.key == pygame.K_a:
+				missilePress = False
+
 			elif event.key == pygame.K_s:
 				shootPress = False
 
@@ -352,11 +411,12 @@ while not gameOver:
 		
 	#MAKE CHANGES
 
-	if blockerPress:
+	if blockerPress and hero.numOfBlockers >0:
 		hero.placeBlocker()
 
+
 	#move hero
-	if not shootPress:
+	if not shootPress and not missilePress:
 		if leftPress:
 			hero.vx -= heroAccel
 		if rightPress:
@@ -382,6 +442,22 @@ while not gameOver:
 		hero.y = screenSize[1]-1
 		hero.vy = 0
 
+	#move missiles
+	for missile in missiles:
+		missile.move()
+
+		for zombie in zombies:
+			if abs(missile.x - zombie.x) <= heroRadius and abs(missile.y - zombie.y) <= heroRadius and missile.isAlive:
+				missile.isAlive = False
+				zombie.isAlive = False
+
+	#pick up care packages
+	for package in packages:
+		if abs(package.x - hero.x) <= heroRadius and abs(package.y - hero.y) <= heroRadius:
+			hero.numOfMissiles += itemsInPackage
+			hero.numOfBlockers += itemsInPackage
+			package.isAlive = False
+
 	#move bullets
 	for bullet in bullets:
 		bullet.move()
@@ -402,9 +478,14 @@ while not gameOver:
 				else:
 					bullet.reflectY()
 
+	#place care packages
+	if pygame.time.get_ticks() > timeBetweenPackages * packageCount:
+		packages.append(CarePackage(randint(0,screenSize[0]),randint(0,screenSize[1])))
+		packageCount += 1
+
 	#move zombies
-	if not pygame.time.get_ticks() < timeBetweenZombies * zombieCount:
-		zombies.append(Zombie(hero))
+	if pygame.time.get_ticks() > timeBetweenZombies * zombieCount:
+		zombies.append(Zombie(hero,zombieSpeed+randint(0,zombieCount/zombiesBetweenPackage)))
 		zombieCount+=1 
 
 	for zombie in zombies:
@@ -415,9 +496,10 @@ while not gameOver:
 			gameOver = True
 
 		for bullet in bullets:
-			if abs(bullet.x - zombie.x) <= heroRadius and abs(bullet.y - zombie.y) <= heroRadius:
+			if abs(bullet.x - zombie.x) <= heroRadius and abs(bullet.y - zombie.y) <= heroRadius and bullet.isAlive:
 				bullet.isAlive = False
 				zombie.isAlive = False
+
 
 		for blocker in blockers:
 			while blocker.contains(zombie):
@@ -439,16 +521,30 @@ while not gameOver:
 		if not blocker.isAlive:
 			del blockers[i]
 
+	for i, missile in enumerate(missiles):
+		if not missile.isAlive:
+			del missiles[i]
+
+	for i, package in enumerate(packages):
+		if not package.isAlive:
+			del packages[i]
+
 	#DRAW
 	screen.fill(BLACK)
 
 	for blocker in blockers:
 		blocker.draw()
 
+	for package in packages:
+		package.draw()
+
 	hero.draw()
 
 	for zombie in zombies:
 		zombie.draw()
+
+	for missile in missiles:
+		missile.draw()
 
 	for bullet in bullets:
 		bullet.draw()
