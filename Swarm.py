@@ -25,21 +25,6 @@ E = 1
 S = 2
 W = 3
 
-leftPress = False
-rightPress = False
-upPress = False
-downPress = False
-shootPress = False
-blockerPress = False
-missilePress = False
-
-bullets = []
-blockers = []
-zombies = []
-missiles = []
-packages = []
-zombieCount = 0
-packageCount = 0
 zombiesBetweenPackage = 10
 timeBetweenZombies = 3000
 timeBetweenPackages = timeBetweenZombies * zombiesBetweenPackage
@@ -61,13 +46,11 @@ blockersInPackage = 8
 
 class Stopwatch:
 	def __init__(self):
-		self.reset()
+		self.startTime = pygame.time.get_ticks()
 		self.lastPause = self.startTime
 		self.paused = False
 	def getTime(self):
 		return pygame.time.get_ticks() - self.startTime
-	def reset(self):
-		self.startTime = pygame.time.get_ticks()
 	def pause(self):
 		self.lastPause = pygame.time.get_ticks()
 		self.paused = True
