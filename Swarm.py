@@ -59,6 +59,24 @@ blockersInPackage = 8
 
 #DEFINE OBJECTS
 
+class Stopwatch:
+	def __init__(self):
+		self.reset()
+		self.lastPause = self.startTime
+		self.paused = False
+	def getTime(self):
+		return pygame.time.get_ticks() - self.startTime
+	def reset(self):
+		self.startTime = pygame.time.get_ticks()
+	def pause(self):
+		self.lastPause = pygame.time.get_ticks()
+		self.paused = True
+	def play(self):
+		if self.paused:
+			self.startTime += pygame.time.get_ticks() - self.lastPause
+		self.paused = False
+
+
 class Hero:
 	def __init__(self, xPos, yPos, xVel, yVel, direction):
 		self.x = xPos
@@ -330,245 +348,299 @@ class Blocker:
 
 #PLACE OBJECTS
 
-hero = Hero(screenSize[0]/2,screenSize[1]/2,0,0,E)
 
 #START GAME
 
-gameOver = False
 quit = False
-while not gameOver:
+while not quit:
 
-	#EVENT LISTENING
+	leftPress = False
+	rightPress = False
+	upPress = False
+	downPress = False
+	shootPress = False
+	blockerPress = False
+	missilePress = False
 
-	for event in pygame.event.get():
+	bullets = []
+	blockers = []
+	zombies = []
+	missiles = []
+	packages = []
 
-		if event.type == pygame.QUIT:
-			quit = True
- 
-		elif event.type == pygame.KEYDOWN:
-			if event.key == pygame.K_LEFT:
-				leftPress = True
-				hero.direction = W
-				if shootPress:
-					hero.shoot()
-				if missilePress and hero.numOfMissiles > 0:
-					missiles.append(Missile(hero,W))
-					hero.numOfMissiles -= 1
+	zombieCount = 0
+	packageCount = 0
+	stopwatch = Stopwatch()
 
-			elif event.key == pygame.K_RIGHT:
-				rightPress = True
-				hero.direction = E
-				if shootPress:
-					hero.shoot()
-				if missilePress and hero.numOfMissiles > 0:
-					missiles.append(Missile(hero,E))
-					hero.numOfMissiles -= 1
+	hero = Hero(screenSize[0]/2,screenSize[1]/2,0,0,E)
 
-			elif event.key == pygame.K_UP:
-				upPress = True
-				hero.direction = N
-				if shootPress:
-					hero.shoot()
-				if missilePress and hero.numOfMissiles > 0:
-					missiles.append(Missile(hero,N))
-					hero.numOfMissiles -= 1
+	gameOver = False
+	while not gameOver:
 
-			elif event.key == pygame.K_DOWN:
-				downPress = True
-				hero.direction = S
-				if shootPress:
-					hero.shoot()
-				if missilePress and hero.numOfMissiles > 0:
-					missiles.append(Missile(hero,S))
-					hero.numOfMissiles -= 1
+		#EVENT LISTENING
 
-			elif event.key == pygame.K_a:
-				missilePress = True
+		for event in pygame.event.get():
 
-			elif event.key == pygame.K_s:
-				shootPress = True
+			if event.type == pygame.QUIT:
+				quit = True
+	 
+			elif event.type == pygame.KEYDOWN:
+				if not stopwatch.paused:
+					if event.key == pygame.K_LEFT:
+						leftPress = True
+						hero.direction = W
+						if shootPress:
+							hero.shoot()
+						if missilePress and hero.numOfMissiles > 0:
+							missiles.append(Missile(hero,W))
+							hero.numOfMissiles -= 1
 
-			elif event.key == pygame.K_d:
-				blockerPress = True
- 
-		elif event.type == pygame.KEYUP:
-			if event.key == pygame.K_LEFT:
-				leftPress = False
+					elif event.key == pygame.K_RIGHT:
+						rightPress = True
+						hero.direction = E
+						if shootPress:
+							hero.shoot()
+						if missilePress and hero.numOfMissiles > 0:
+							missiles.append(Missile(hero,E))
+							hero.numOfMissiles -= 1
 
-			elif event.key == pygame.K_RIGHT:
-				rightPress = False
+					elif event.key == pygame.K_UP:
+						upPress = True
+						hero.direction = N
+						if shootPress:
+							hero.shoot()
+						if missilePress and hero.numOfMissiles > 0:
+							missiles.append(Missile(hero,N))
+							hero.numOfMissiles -= 1
 
-			elif event.key == pygame.K_UP:
-				upPress = False
+					elif event.key == pygame.K_DOWN:
+						downPress = True
+						hero.direction = S
+						if shootPress:
+							hero.shoot()
+						if missilePress and hero.numOfMissiles > 0:
+							missiles.append(Missile(hero,S))
+							hero.numOfMissiles -= 1
 
-			elif event.key == pygame.K_DOWN:
-				downPress = False
+				if event.key == pygame.K_a:
+					missilePress = True
 
-			elif event.key == pygame.K_a:
-				missilePress = False
+				elif event.key == pygame.K_s:
+					shootPress = True
 
-			elif event.key == pygame.K_s:
-				shootPress = False
+				elif event.key == pygame.K_d:
+					blockerPress = True
 
-			elif event.key == pygame.K_d:
-				blockerPress = False
+				elif event.key == pygame.K_p:
+					if not stopwatch.paused:
+						stopwatch.pause()
+					else:
+						stopwatch.play()
+	 
+			elif event.type == pygame.KEYUP:
+				if event.key == pygame.K_LEFT:
+					leftPress = False
 
-	if quit:
-		break
-		
-	#MAKE CHANGES
+				elif event.key == pygame.K_RIGHT:
+					rightPress = False
 
-	if blockerPress and hero.numOfBlockers >0:
-		hero.placeBlocker()
+				elif event.key == pygame.K_UP:
+					upPress = False
+
+				elif event.key == pygame.K_DOWN:
+					downPress = False
+
+				elif event.key == pygame.K_a:
+					missilePress = False
+
+				elif event.key == pygame.K_s:
+					shootPress = False
+
+				elif event.key == pygame.K_d:
+					blockerPress = False
+
+		if quit:
+			break
+			
+		#MAKE CHANGES
+		if not stopwatch.paused:
+
+			if blockerPress and hero.numOfBlockers >0:
+				hero.placeBlocker()
 
 
-	#move hero
-	if not shootPress and not missilePress:
-		if leftPress:
-			hero.vx -= heroAccel
-		if rightPress:
-			hero.vx += heroAccel
-		if upPress:
-			hero.vy -= heroAccel
-		if downPress:
-			hero.vy += heroAccel
+			#move hero
+			if not shootPress and not missilePress:
+				if leftPress:
+					hero.vx -= heroAccel
+				if rightPress:
+					hero.vx += heroAccel
+				if upPress:
+					hero.vy -= heroAccel
+				if downPress:
+					hero.vy += heroAccel
 
-	hero.x += hero.vx
-	hero.y += hero.vy
+			hero.x += hero.vx
+			hero.y += hero.vy
 
-	if hero.x <= 0:
-		hero.x = 1
-		hero.vx = 0
-	if hero.y <= 0:
-		hero.y = 1
-		hero.vy = 0
-	if hero.x >= screenSize[0]:
-		hero.x = screenSize[0]-1
-		hero.vx = 0
-	if hero.y >= screenSize[1]:
-		hero.y = screenSize[1]-1
-		hero.vy = 0
+			if hero.x <= 0:
+				hero.x = 1
+				hero.vx = 0
+			if hero.y <= 0:
+				hero.y = 1
+				hero.vy = 0
+			if hero.x >= screenSize[0]:
+				hero.x = screenSize[0]-1
+				hero.vx = 0
+			if hero.y >= screenSize[1]:
+				hero.y = screenSize[1]-1
+				hero.vy = 0
 
-	#move missiles
-	for missile in missiles:
-		missile.move()
+			#move missiles
+			for missile in missiles:
+				missile.move()
+
+				for zombie in zombies:
+					if abs(missile.x - zombie.x) <= heroRadius and abs(missile.y - zombie.y) <= heroRadius and missile.isAlive:
+						missile.isAlive = False
+						zombie.isAlive = False
+
+			#pick up care packages
+			for package in packages:
+				if abs(package.x - hero.x) <= heroRadius + 5 and abs(package.y - hero.y) <= heroRadius + 5:
+					hero.numOfMissiles += missilesInPackage
+					hero.numOfBlockers += blockersInPackage
+					package.isAlive = False
+
+			#move bullets
+			for bullet in bullets:
+				bullet.move()
+
+				if abs(bullet.x - hero.x) <= heroRadius and abs(bullet.y - hero.y) <= heroRadius:
+					gameOver = True
+
+				for blocker in blockers:
+					wasIn = False
+					while blocker.contains(bullet):
+						bullet.x -= bullet.vx
+						bullet.y -= bullet.vy
+						wasIn = True
+					if wasIn:
+						if blocker.relativeTo(bullet) == E or blocker.relativeTo(bullet) == W:
+							bullet.reflectX()
+						else:
+							bullet.reflectY()
+
+			#place care packages
+			if stopwatch.getTime() > timeBetweenPackages * packageCount - timeBetweenZombies:
+				packages.append(CarePackage(randint(0,screenSize[0]),randint(0,screenSize[1])))
+				packageCount += 1
+
+			#move zombies
+			if stopwatch.getTime() > timeBetweenZombies * zombieCount:
+				randomizer = randint(0,zombieCount/zombiesBetweenPackage)*randint(0,zombieCount/zombiesBetweenPackage) * 2 * zombiesBetweenPackage/(zombieCount+1)
+				zombies.append(Zombie(hero,zombieSpeed+randomizer))
+				zombieCount+=1
+
+			for zombie in zombies:
+				zombie.move()
+
+				if abs(zombie.x - hero.x) <= 2*heroRadius and abs(zombie.y - hero.y) <= 2*heroRadius:
+					gameOver = True
+
+				for bullet in bullets:
+					if abs(bullet.x - zombie.x) <= heroRadius and abs(bullet.y - zombie.y) <= heroRadius and bullet.isAlive:
+						bullet.isAlive = False
+						zombie.isAlive = False
+
+
+				for blocker in blockers:
+					while blocker.contains(zombie):
+						blocker.smash()
+						zombie.x -= zombie.vx
+						zombie.y -= zombie.vy
+
+			#DELETE STUFF
+
+			for i, bullet in enumerate(bullets):
+				if not bullet.isAlive:
+					del bullets[i]
+
+			for i, zombie in enumerate(zombies):
+				if not zombie.isAlive:
+					del zombies[i]
+
+			for i, blocker in enumerate(blockers):
+				if not blocker.isAlive:
+					del blockers[i]
+
+			for i, missile in enumerate(missiles):
+				if not missile.isAlive:
+					del missiles[i]
+
+			for i, package in enumerate(packages):
+				if not package.isAlive:
+					del packages[i]
+
+		#DRAW
+		screen.fill(BLACK)
+
+		for blocker in blockers:
+			blocker.draw()
+
+		for package in packages:
+			package.draw()
+
+		hero.draw()
 
 		for zombie in zombies:
-			if abs(missile.x - zombie.x) <= heroRadius and abs(missile.y - zombie.y) <= heroRadius and missile.isAlive:
-				missile.isAlive = False
-				zombie.isAlive = False
+			zombie.draw()
 
-	#pick up care packages
-	for package in packages:
-		if abs(package.x - hero.x) <= heroRadius + 5 and abs(package.y - hero.y) <= heroRadius + 5:
-			hero.numOfMissiles += missilesInPackage
-			hero.numOfBlockers += blockersInPackage
-			package.isAlive = False
-
-	#move bullets
-	for bullet in bullets:
-		bullet.move()
-
-		if abs(bullet.x - hero.x) <= heroRadius and abs(bullet.y - hero.y) <= heroRadius:
-			gameOver = True
-
-		for blocker in blockers:
-			wasIn = False
-			while blocker.contains(bullet):
-				bullet.x -= bullet.vx
-				bullet.y -= bullet.vy
-				wasIn = True
-			if wasIn:
-				if blocker.relativeTo(bullet) == E or blocker.relativeTo(bullet) == W:
-					bullet.reflectX()
-				else:
-					bullet.reflectY()
-
-	#place care packages
-	if pygame.time.get_ticks() > timeBetweenPackages * packageCount - timeBetweenZombies:
-		packages.append(CarePackage(randint(0,screenSize[0]),randint(0,screenSize[1])))
-		packageCount += 1
-
-	#move zombies
-	if pygame.time.get_ticks() > timeBetweenZombies * zombieCount:
-		randomizer = randint(0,zombieCount/zombiesBetweenPackage)*randint(0,zombieCount/zombiesBetweenPackage) * 2 * zombiesBetweenPackage/(zombieCount+1)
-		zombies.append(Zombie(hero,zombieSpeed+randomizer))
-		zombieCount+=1
-
-	for zombie in zombies:
-		zombie.move()
-
-		if abs(zombie.x - hero.x) <= 2*heroRadius and abs(zombie.y - hero.y) <= 2*heroRadius:
-			gameOver = True
+		for missile in missiles:
+			missile.draw()
 
 		for bullet in bullets:
-			if abs(bullet.x - zombie.x) <= heroRadius and abs(bullet.y - zombie.y) <= heroRadius and bullet.isAlive:
-				bullet.isAlive = False
-				zombie.isAlive = False
+			bullet.draw()
 
+		hud = hudFont.render("MISSILES: " + str(hero.numOfMissiles) + "  BLOCKERS: " + str(hero.numOfBlockers), False, WHITE)
+		screen.blit(hud,(5,screenSize[1]-17))
 
-		for blocker in blockers:
-			while blocker.contains(zombie):
-				blocker.smash()
-				zombie.x -= zombie.vx
-				zombie.y -= zombie.vy
+		title = titleFont.render("LEVEL " + str(zombieCount/zombiesBetweenPackage + 1), False, WHITE)
+		screen.blit(title,(screenSize[0]-120, 5))
 
-	#DELETE STUFF
+		if gameOver:
+			title = titleFont.render("GAME OVER", False, WHITE)
+			screen.blit(title,(screenSize[0]/2-50, screenSize[1]/2-20))
 
-	for i, bullet in enumerate(bullets):
-		if not bullet.isAlive:
-			del bullets[i]
+		if stopwatch.paused:
+			title = titleFont.render("PAUSED", False, WHITE)
+			screen.blit(title,(screenSize[0]/2-50, screenSize[1]/2-20))
 
-	for i, zombie in enumerate(zombies):
-		if not zombie.isAlive:
-			del zombies[i]
-
-	for i, blocker in enumerate(blockers):
-		if not blocker.isAlive:
-			del blockers[i]
-
-	for i, missile in enumerate(missiles):
-		if not missile.isAlive:
-			del missiles[i]
-
-	for i, package in enumerate(packages):
-		if not package.isAlive:
-			del packages[i]
-
-	#DRAW
-	screen.fill(BLACK)
-
-	for blocker in blockers:
-		blocker.draw()
-
-	for package in packages:
-		package.draw()
-
-	hero.draw()
-
-	for zombie in zombies:
-		zombie.draw()
-
-	for missile in missiles:
-		missile.draw()
-
-	for bullet in bullets:
-		bullet.draw()
-
-	hud = hudFont.render("MISSILES: " + str(hero.numOfMissiles) + "  BLOCKERS: " + str(hero.numOfBlockers), False, WHITE)
-	screen.blit(hud,(5,screenSize[1]-17))
-
-	title = titleFont.render("LEVEL " + str(zombieCount/zombiesBetweenPackage + 1), False, WHITE)
-	screen.blit(title,(screenSize[0]-120, 5))
+		#UPDATE
+		pygame.display.flip()
+		clock.tick(20) #Limit frames per second
 
 	if gameOver:
-		title = titleFont.render("GAME OVER", False, WHITE)
-		screen.blit(title,(screenSize[0]/2-50, screenSize[1]/2-20))
+		pygame.time.wait(2500)
 
-	#UPDATE
-	pygame.display.flip()
-	clock.tick(20) #Limit frames per second
+		playAgain = False
+		screen.fill(BLACK)
+		title = titleFont.render("YOU MADE IT TO LEVEL " + str(zombieCount/zombiesBetweenPackage + 1), False, WHITE)
+		screen.blit(title,(screenSize[0]/2-140, screenSize[1]/2-60))
+		title = titleFont.render("PRESS ANY KEY TO PLAY AGAIN", False, WHITE)
+		screen.blit(title,(screenSize[0]/2-170, screenSize[1]/2-20))
+		pygame.display.flip()
 
-if gameOver:
-	pygame.time.wait(2500)
+		while not playAgain:
+			for event in pygame.event.get():
+
+				if event.type == pygame.QUIT:
+					quit = True
+
+				elif event.type == pygame.KEYDOWN:
+					playAgain = True
+
+			if quit:
+				break
+
 pygame.quit()
