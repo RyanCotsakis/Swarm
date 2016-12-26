@@ -614,6 +614,10 @@ while not quit:
 		screen.blit(title,(screenSize[0]/2-170, screenSize[1]/2-20))
 		pygame.display.flip()
 
+		#bleed event list
+		for event in pygame.event.get():
+			"do nothing with it"
+
 		while not playAgain:
 			for event in pygame.event.get():
 
