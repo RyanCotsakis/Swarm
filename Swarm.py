@@ -31,6 +31,8 @@ timeBetweenZombies = 3000
 timeBetweenPackages = timeBetweenZombies * zombiesBetweenPackage
 zombieSpeed = 2
 readyForLevel = True
+numOfMissiles = 0
+numOfBlockers = 0
 
 hudFont = pygame.font.SysFont("Courier New", 12)
 titleFont = pygame.font.SysFont("Courier New", 20)
@@ -391,7 +393,10 @@ while not quit:
 	packageCount = 0
 	stopwatch = Stopwatch()
 
+
 	hero = Hero(screenSize[0]/2,screenSize[1]/2,0,0,E)
+	hero.numOfBlockers = numOfBlockers
+	hero.numOfMissiles = numOfMissiles
 
 	gameOver = False
 	while not gameOver:
@@ -527,8 +532,8 @@ while not quit:
 			#pick up care packages
 			for package in packages:
 				if abs(package.x - hero.x) <= heroRadius + 5 and abs(package.y - hero.y) <= heroRadius + 5:
-					hero.numOfMissiles += missilesInPackage
-					hero.numOfBlockers += blockersInPackage
+					hero.numOfMissiles += max(missilesInPackage,zombieCount/zombiesBetweenPackage + 1)
+					hero.numOfBlockers += max(blockersInPackage,2*(zombieCount/zombiesBetweenPackage + 1))
 					package.isAlive = False
 
 			#move bullets
@@ -564,7 +569,7 @@ while not quit:
 			#move zombies
 			if stopwatch.getTime() > timeBetweenZombies * zombieCount:
 				randomizer = randint(0,zombieCount/zombiesBetweenPackage)*randint(0,zombieCount/zombiesBetweenPackage) * 2 * zombiesBetweenPackage/(zombieCount+1)
-				smart = (randint(0,zombieCount/zombiesBetweenPackage + 1) >= 4)
+				smart = (randint(0,zombieCount/zombiesBetweenPackage + 3) >= 6)
 				zombies.append(Zombie(hero,zombieSpeed+randomizer,smart))
 				zombieCount+=1
 
@@ -671,6 +676,8 @@ while not quit:
 				elif event.type == pygame.KEYDOWN:
 					playAgain = True
 					readyForLevel = True
+					numOfBlockers = max(hero.numOfBlockers-blockersInPackage,0)
+					numOfMissiles = max(hero.numOfMissiles-missilesInPackage,0)
 
 			if quit:
 				break
