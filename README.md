@@ -6,7 +6,7 @@ Collect the care packages that appear at the beginning of each level, to stock u
 'Swarm.exe' can be downloaded directly to your PC.
 
 ### How To Play:
-- Move with the Arrow keys
+- Move with the arrow keys
 - Hold (S) to toggle 'shoot mode'
 - When in shoot mode, arrow keys dispence bullets in corresponding directions
 - Hold (A) to toggle 'missile mode'
