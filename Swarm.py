@@ -17,6 +17,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+ORANGE = (255,128,0)
 GREY = (127,127,127)
 PINK = (255, 192, 203)
 
@@ -29,6 +30,7 @@ zombiesBetweenPackage = 10
 timeBetweenZombies = 3000
 timeBetweenPackages = timeBetweenZombies * zombiesBetweenPackage
 zombieSpeed = 2
+readyForLevel = True
 
 hudFont = pygame.font.SysFont("Courier New", 12)
 titleFont = pygame.font.SysFont("Courier New", 20)
@@ -58,6 +60,8 @@ class Stopwatch:
 		if self.paused:
 			self.startTime += pygame.time.get_ticks() - self.lastPause
 		self.paused = False
+	def wait(self, dur):
+		self.startTime += 1000*dur
 
 
 class Hero:
@@ -144,8 +148,13 @@ class CarePackage:
 		pygame.draw.ellipse(screen, PINK, [self.x-6,self.y-6,13,13],3)
 
 class Zombie:
-	def __init__(self, hero, speed):
+	def __init__(self, hero, speed, smart):
+		self.vx = 0
+		self.vy = 0
 		self.speed = speed
+		self.smart = smart
+		if smart:
+			self.smartness = randint(0,255)
 		side = randint(0,3)
 		if side == N:
 			self.x = randint(0,screenSize[0])
@@ -166,8 +175,31 @@ class Zombie:
 	def move(self):
 		vx = int(self.hero.x - self.x)
 		vy = int(self.hero.y - self.y)
+
+		#Smart zombies avoid bullets
+		if self.smart:
+			for bullet in bullets:
+				bvx = bullet.vx
+				bvy = bullet.vy
+				rx = self.x-bullet.x
+				ry = self.y-bullet.y
+				dot = (bvx*rx+bvy*ry)
+				if dot > 0:
+					distToPathx = (rx-bvx*dot/(bvx*bvx+bvy*bvy+1))
+					distToPathy = (ry-bvy*dot/(bvx*bvx+bvy*bvy+1))
+					distToPath2 = distToPathx*distToPathx+distToPathy*distToPathy
+					if not distToPathx or not distToPathy:
+						vx = 100
+						vy = 100
+					else:
+						danger = self.smartness*(abs(vx)+abs(vy))/(abs(rx)+abs(ry))/distToPath2
+						vx += danger*distToPathx
+						vy += danger*distToPathy
+
+
 		avx = abs(vx)
 		avy = abs(vy)
+
 		self.vx = (self.speed*vx)/(avx+avy+1)
 		self.vy = (self.speed*vy)/(avx+avy+1)
 		self.x += self.vx
@@ -183,7 +215,11 @@ class Zombie:
 
 	def draw(self):
 		# Head
-		pygame.draw.ellipse(screen, RED, [self.x-heroRadius, self.y-heroRadius, 2*heroRadius, 2*heroRadius], 0)
+		if self.smart:
+			color = (255, self.smartness, 0)
+		else:
+			color = RED
+		pygame.draw.ellipse(screen, color, [self.x-heroRadius, self.y-heroRadius, 2*heroRadius, 2*heroRadius], 0)
 
 		if self.direction == N:
 			# Eyes
@@ -514,15 +550,22 @@ while not quit:
 						else:
 							bullet.reflectY()
 
-			#place care packages
+
 			if stopwatch.getTime() > timeBetweenPackages * packageCount - timeBetweenZombies:
-				packages.append(CarePackage(randint(0,screenSize[0]),randint(0,screenSize[1])))
-				packageCount += 1
+				if not readyForLevel:
+					stopwatch.wait(10)
+					readyForLevel = True
+				else:
+					packages.append(CarePackage(randint(0,screenSize[0]),randint(0,screenSize[1])))
+					packageCount += 1
+					readyForLevel = False
+
 
 			#move zombies
 			if stopwatch.getTime() > timeBetweenZombies * zombieCount:
 				randomizer = randint(0,zombieCount/zombiesBetweenPackage)*randint(0,zombieCount/zombiesBetweenPackage) * 2 * zombiesBetweenPackage/(zombieCount+1)
-				zombies.append(Zombie(hero,zombieSpeed+randomizer))
+				smart = (randint(0,zombieCount/zombiesBetweenPackage + 1) >= 4)
+				zombies.append(Zombie(hero,zombieSpeed+randomizer,smart))
 				zombieCount+=1
 
 			for zombie in zombies:
@@ -588,8 +631,9 @@ while not quit:
 		hud = hudFont.render("MISSILES: " + str(hero.numOfMissiles) + "  BLOCKERS: " + str(hero.numOfBlockers), False, WHITE)
 		screen.blit(hud,(5,screenSize[1]-17))
 
-		title = titleFont.render("LEVEL " + str(zombieCount/zombiesBetweenPackage + 1), False, WHITE)
-		screen.blit(title,(screenSize[0]-120, 5))
+		if (readyForLevel and int(stopwatch.getTime()/500)%2) or not readyForLevel:
+			title = titleFont.render("LEVEL " + str(zombieCount/zombiesBetweenPackage + 1), False, WHITE)
+			screen.blit(title,(screenSize[0]-120, 5))
 
 		if gameOver:
 			title = titleFont.render("GAME OVER", False, WHITE)
@@ -626,6 +670,7 @@ while not quit:
 
 				elif event.type == pygame.KEYDOWN:
 					playAgain = True
+					readyForLevel = True
 
 			if quit:
 				break
