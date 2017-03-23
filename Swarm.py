@@ -532,8 +532,11 @@ while not quit:
 			#pick up care packages
 			for package in packages:
 				if abs(package.x - hero.x) <= heroRadius + 5 and abs(package.y - hero.y) <= heroRadius + 5:
-					hero.numOfMissiles += max(missilesInPackage,zombieCount/zombiesBetweenPackage + 1)
-					hero.numOfBlockers += max(blockersInPackage,2*(zombieCount/zombiesBetweenPackage + 1))
+					hero.numOfMissiles += missilesInPackage
+					hero.numOfBlockers += blockersInPackage
+					if zombieCount/zombiesBetweenPackage >= 4:
+						hero.numOfMissiles += 2
+						hero.numOfBlockers += 2
 					package.isAlive = False
 
 			#move bullets
