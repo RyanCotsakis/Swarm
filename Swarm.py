@@ -20,6 +20,7 @@ RED = (255, 0, 0)
 ORANGE = (255,128,0)
 GREY = (127,127,127)
 PINK = (255, 192, 203)
+BLUE = (0,0,255)
 
 N = 0
 E = 1
@@ -150,11 +151,16 @@ class CarePackage:
 		pygame.draw.ellipse(screen, PINK, [self.x-6,self.y-6,13,13],3)
 
 class Zombie:
-	def __init__(self, hero, speed, smart):
+	def __init__(self, hero, speed, smart, strong):
 		self.vx = 0
 		self.vy = 0
-		self.speed = speed
+		if not strong:
+			self.speed = speed
+		else:
+			self.speed = zombieSpeed
 		self.smart = smart
+		self.strong = strong
+
 		if smart:
 			self.smartness = randint(0,255)
 		side = randint(0,3)
@@ -218,9 +224,9 @@ class Zombie:
 	def draw(self):
 		# Head
 		if self.smart:
-			color = (255, self.smartness, 0)
+			color = (255*(1-self.strong), self.smartness, 255*self.strong)
 		else:
-			color = RED
+			color = (255*(1-self.strong), 0, 255*self.strong)
 		pygame.draw.ellipse(screen, color, [self.x-heroRadius, self.y-heroRadius, 2*heroRadius, 2*heroRadius], 0)
 
 		if self.direction == N:
@@ -527,7 +533,8 @@ while not quit:
 				for zombie in zombies:
 					if abs(missile.x - zombie.x) <= heroRadius and abs(missile.y - zombie.y) <= heroRadius and missile.isAlive:
 						missile.isAlive = False
-						zombie.isAlive = False
+						if not zombie.strong:
+							zombie.isAlive = False
 
 			#pick up care packages
 			for package in packages:
@@ -573,7 +580,8 @@ while not quit:
 			if stopwatch.getTime() > timeBetweenZombies * zombieCount:
 				randomizer = randint(0,zombieCount/zombiesBetweenPackage)*randint(0,zombieCount/zombiesBetweenPackage) * 2 * zombiesBetweenPackage/(zombieCount+1)
 				smart = (randint(0,zombieCount/zombiesBetweenPackage + 3) >= 6)
-				zombies.append(Zombie(hero,zombieSpeed+randomizer,smart))
+				strong = (randint(1,zombiesBetweenPackage)==1)
+				zombies.append(Zombie(hero,zombieSpeed+randomizer,smart,strong))
 				zombieCount+=1
 
 			for zombie in zombies:
