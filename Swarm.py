@@ -1,10 +1,11 @@
 import pygame
 from random import randint
+import time
 
 #GAME INITIATION
 
 pygame.init()
-screenSize = [1000,500]
+screenSize = [1100,550]
 screen = pygame.display.set_mode(screenSize)
  
 pygame.display.set_caption("Swarm")
@@ -97,6 +98,9 @@ class Hero:
 		newBlock = Blocker(self.x,self.y)
 		for blocker in blockers:
 			if newBlock.isAlready(blocker):
+				return
+		for bullet in bullets:
+			if newBlock.contains(bullet):
 				return
 		blockers.append(newBlock)
 		self.numOfBlockers -= 1
@@ -692,5 +696,7 @@ while not quit:
 
 			if quit:
 				break
+
+			time.sleep(0.02)
 
 pygame.quit()
