@@ -47,6 +47,7 @@ missileSpeed = 5
 blockerStrength = 100
 missilesInPackage = 4
 blockersInPackage = 8
+bulletHealth = 5
 
 #DEFINE OBJECTS
 
@@ -276,12 +277,25 @@ class Bullet:
 		self.vx = xVel
 		self.vy = yVel
 		self.isAlive = True
+		self.health = bulletHealth + randint(0,3) + randint(0,3)
 
 	def reflectX(self):
-		self.vx = -self.vx
+		self.health -= 1
+		if self.health == 1:
+			self.vx = -int(self.vx/2)
+		else:
+			self.vx = -self.vx
+		if self.health <= 0:
+			self.isAlive = False
 	
 	def reflectY(self):
-		self.vy = -self.vy
+		self.health -= 1
+		if self.health == 1:
+			self.vy = -int(self.vy/2)
+		else:
+			self.vy = -self.vy
+		if self.health <= 0:
+			self.isAlive = False
 
 	def move(self):
 		self.x += self.vx
@@ -301,7 +315,13 @@ class Bullet:
 			self.y = screenSize[1]-1
 
 	def draw(self):
-		pygame.draw.ellipse(screen, GREEN, [self.x, self.y, 5, 5], 0)
+		if self.health == 1:
+			color = (0,128,0)
+		elif self.health == 2:
+			color = (0,255,0)
+		else:
+			color = (0,255,128)
+		pygame.draw.ellipse(screen, color, [self.x, self.y, 5, 5], 0)
 
 class Missile:
 	def __init__(self, hero, direction):
