@@ -4,7 +4,7 @@ import sys #for debugging
 
 lengthsOfMessages = []
 
-def start(server):
+def start(server, altCont):
 	start = False
 	hasIndex = False
 	while not (start and hasIndex):
@@ -58,7 +58,7 @@ def start(server):
 			if event.type == pygame.QUIT:
 				quit = True
 			elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
-				server.send("_" + str(int(event.type == pygame.KEYDOWN)) + str(event.key))
+				server.send("_" + str(int(altCont)) + str(int(event.type == pygame.KEYDOWN)) + str(event.key))
 
 		for i, bullet in enumerate(objs.bullets):
 			if not bullet.isAlive:

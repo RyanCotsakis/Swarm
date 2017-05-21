@@ -1,7 +1,7 @@
 from gamePlay import *
 import sys
 
-def start(clients):
+def start(clients, altCont):
 
 	pygame.init()
 	screen = pygame.display.set_mode(screenSize)
@@ -31,6 +31,9 @@ def start(clients):
 		stopwatch = Stopwatch()
 
 		hero = Hero(ii.next(), screen, screenSize[0]/2,screenSize[1]/2,0,0,E,SENTINEL)
+		if altCont:
+			hero.shootPress = True
+			hero.altCont = altCont
 		objs.heros.append(hero)
 		i = 1
 		for client in clients:
@@ -48,86 +51,182 @@ def start(clients):
 		while not gameOver:
 
 			#EVENT LISTENING
+			if hero.isAlive:
 
-			for event in pygame.event.get():
+				if not altCont:
 
-				if event.type == pygame.QUIT:
-					quit = True
-		 
-				elif event.type == pygame.KEYDOWN:
-					if not stopwatch.paused:
-						if event.key == pygame.K_LEFT:
-							hero.leftPress = True
-							hero.direction = W
-							if hero.shootPress:
-								hero.shoot()
-							if hero.missilePress and hero.numOfMissiles > 0:
-								objs.missiles.append(Missile(ii.next(), screen, hero,W))
-								hero.numOfMissiles -= 1
+					for event in pygame.event.get():
 
-						elif event.key == pygame.K_RIGHT:
-							hero.rightPress = True
-							hero.direction = E
-							if hero.shootPress:
-								hero.shoot()
-							if hero.missilePress and hero.numOfMissiles > 0:
-								objs.missiles.append(Missile(ii.next(), screen, hero,E))
-								hero.numOfMissiles -= 1
+						if event.type == pygame.QUIT:
+							quit = True
+				 
+						elif event.type == pygame.KEYDOWN:
+							if not stopwatch.paused:
+								if event.key == pygame.K_LEFT:
+									hero.leftPress = True
+									hero.direction = W
+									if hero.shootPress:
+										hero.shoot()
+									if hero.missilePress and hero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen, hero,W))
+										hero.numOfMissiles -= 1
 
-						elif event.key == pygame.K_UP:
-							hero.upPress = True
-							hero.direction = N
-							if hero.shootPress:
-								hero.shoot()
-							if hero.missilePress and hero.numOfMissiles > 0:
-								objs.missiles.append(Missile(ii.next(), screen,hero,N))
-								hero.numOfMissiles -= 1
+								elif event.key == pygame.K_RIGHT:
+									hero.rightPress = True
+									hero.direction = E
+									if hero.shootPress:
+										hero.shoot()
+									if hero.missilePress and hero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen, hero,E))
+										hero.numOfMissiles -= 1
 
-						elif event.key == pygame.K_DOWN:
-							hero.downPress = True
-							hero.direction = S
-							if hero.shootPress:
-								hero.shoot()
-							if hero.missilePress and hero.numOfMissiles > 0:
-								objs.missiles.append(Missile(ii.next(), screen,hero,S))
-								hero.numOfMissiles -= 1
+								elif event.key == pygame.K_UP:
+									hero.upPress = True
+									hero.direction = N
+									if hero.shootPress:
+										hero.shoot()
+									if hero.missilePress and hero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen,hero,N))
+										hero.numOfMissiles -= 1
 
-					if event.key == pygame.K_a:
-						hero.missilePress = True
+								elif event.key == pygame.K_DOWN:
+									hero.downPress = True
+									hero.direction = S
+									if hero.shootPress:
+										hero.shoot()
+									if hero.missilePress and hero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen,hero,S))
+										hero.numOfMissiles -= 1
 
-					elif event.key == pygame.K_s:
-						hero.shootPress = True
+							if event.key == pygame.K_a:
+								hero.missilePress = True
 
-					elif event.key == pygame.K_d:
-						hero.blockerPress = True
+							elif event.key == pygame.K_s:
+								hero.shootPress = True
 
-					elif event.key == pygame.K_p:
-						if not stopwatch.paused:
-							stopwatch.pause()
-						else:
-							stopwatch.play()
-		 
-				elif event.type == pygame.KEYUP:
-					if event.key == pygame.K_LEFT:
-						hero.leftPress = False
+							elif event.key == pygame.K_d:
+								hero.blockerPress = True
 
-					elif event.key == pygame.K_RIGHT:
-						hero.rightPress = False
+							elif event.key == pygame.K_p:
+								if not stopwatch.paused:
+									stopwatch.pause()
+								else:
+									stopwatch.play()
+				 
+						elif event.type == pygame.KEYUP:
+							if event.key == pygame.K_LEFT:
+								hero.leftPress = False
 
-					elif event.key == pygame.K_UP:
-						hero.upPress = False
+							elif event.key == pygame.K_RIGHT:
+								hero.rightPress = False
 
-					elif event.key == pygame.K_DOWN:
-						hero.downPress = False
+							elif event.key == pygame.K_UP:
+								hero.upPress = False
 
-					elif event.key == pygame.K_a:
-						hero.missilePress = False
+							elif event.key == pygame.K_DOWN:
+								hero.downPress = False
 
-					elif event.key == pygame.K_s:
-						hero.shootPress = False
+							elif event.key == pygame.K_a:
+								hero.missilePress = False
 
-					elif event.key == pygame.K_d:
-						hero.blockerPress = False
+							elif event.key == pygame.K_s:
+								hero.shootPress = False
+
+							elif event.key == pygame.K_d:
+								hero.blockerPress = False
+
+				else: #altCont == True
+
+					for event in pygame.event.get():
+
+						if event.type == pygame.QUIT:
+							quit = True
+				 
+						elif event.type == pygame.KEYDOWN:
+							if not stopwatch.paused:
+								if event.key == pygame.K_LEFT:
+									hero.leftPress = True
+									hero.direction = W
+
+								elif event.key == pygame.K_RIGHT:
+									hero.rightPress = True
+									hero.direction = E
+
+								elif event.key == pygame.K_UP:
+									hero.upPress = True
+									hero.direction = N
+
+								elif event.key == pygame.K_DOWN:
+									hero.downPress = True
+									hero.direction = S
+
+							if event.key == pygame.K_e:
+								hero.blockerPress = True
+
+							elif event.key == pygame.K_SPACE:
+								hero.shootPress, hero.missilePress = False, True
+
+							elif event.key == pygame.K_w:
+								hero.direction = N
+								if hero.shootPress:
+									hero.shoot()
+								elif hero.numOfMissiles > 0:
+									objs.missiles.append(Missile(ii.next(), screen, hero, hero.direction))
+									hero.numOfMissiles -= 1
+
+							if event.key == pygame.K_a:
+								hero.direction = W
+								if hero.shootPress:
+									hero.shoot()
+								elif hero.numOfMissiles > 0:
+									objs.missiles.append(Missile(ii.next(), screen, hero, hero.direction))
+									hero.numOfMissiles -= 1
+
+							elif event.key == pygame.K_s:
+								hero.direction = S
+								if hero.shootPress:
+									hero.shoot()
+								elif hero.numOfMissiles > 0:
+									objs.missiles.append(Missile(ii.next(), screen, hero, hero.direction))
+									hero.numOfMissiles -= 1
+
+							elif event.key == pygame.K_d:
+								hero.direction = E
+								if hero.shootPress:
+									hero.shoot()
+								elif hero.numOfMissiles > 0:
+									objs.missiles.append(Missile(ii.next(), screen, hero, hero.direction))
+									hero.numOfMissiles -= 1
+
+							elif event.key == pygame.K_p:
+								if not stopwatch.paused:
+									stopwatch.pause()
+								else:
+									stopwatch.play()
+				 
+						elif event.type == pygame.KEYUP:
+							if event.key == pygame.K_LEFT:
+								hero.leftPress = False
+
+							elif event.key == pygame.K_RIGHT:
+								hero.rightPress = False
+
+							elif event.key == pygame.K_UP:
+								hero.upPress = False
+
+							elif event.key == pygame.K_DOWN:
+								hero.downPress = False
+
+							elif event.key == pygame.K_e:
+								hero.blockerPress = False
+
+							elif event.key == pygame.K_SPACE:
+								hero.shootPress, hero.missilePress = True, False
+								
+			else:
+				for event in pygame.event.get():
+					if event.type == pygame.QUIT:
+						quit = True
 
 			if quit:
 				break
@@ -137,77 +236,161 @@ def start(clients):
 			for thehero in objs.heros:
 				if thehero.client != SENTINEL:
 					for event in thehero.client.get():
-						down = int(event[0])
-						key = int(event[1:])
-				 
-						if down:
-							if not stopwatch.paused:
+						altClient = int(event[0])
+						down = int(event[1])
+						key = int(event[2:])
+
+
+				 		if not altClient:
+				 			thehero.altCont = False
+							if down:
+								if not stopwatch.paused:
+									if key == pygame.K_LEFT:
+										thehero.leftPress = True
+										thehero.direction = W
+										if thehero.shootPress:
+											thehero.shoot()
+										if thehero.missilePress and thehero.numOfMissiles > 0:
+											objs.missiles.append(Missile(ii.next(), screen, thehero,W))
+											thehero.numOfMissiles -= 1
+
+									elif key == pygame.K_RIGHT:
+										thehero.rightPress = True
+										thehero.direction = E
+										if thehero.shootPress:
+											thehero.shoot()
+										if thehero.missilePress and thehero.numOfMissiles > 0:
+											objs.missiles.append(Missile(ii.next(), screen, thehero,E))
+											thehero.numOfMissiles -= 1
+
+									elif key == pygame.K_UP:
+										thehero.upPress = True
+										thehero.direction = N
+										if thehero.shootPress:
+											thehero.shoot()
+										if thehero.missilePress and thehero.numOfMissiles > 0:
+											objs.missiles.append(Missile(ii.next(), screen, thehero,N))
+											thehero.numOfMissiles -= 1
+
+									elif key == pygame.K_DOWN:
+										thehero.downPress = True
+										thehero.direction = S
+										if thehero.shootPress:
+											thehero.shoot()
+										if thehero.missilePress and thehero.numOfMissiles > 0:
+											objs.missiles.append(Missile(ii.next(), screen,thehero,S))
+											thehero.numOfMissiles -= 1
+
+								if key == pygame.K_a:
+									thehero.missilePress = True
+
+								elif key == pygame.K_s:
+									thehero.shootPress = True
+
+								elif key == pygame.K_d:
+									thehero.blockerPress = True
+					 
+							else:
 								if key == pygame.K_LEFT:
-									thehero.leftPress = True
-									thehero.direction = W
-									if thehero.shootPress:
-										thehero.shoot()
-									if thehero.missilePress and thehero.numOfMissiles > 0:
-										objs.missiles.append(Missile(ii.next(), screen, thehero,W))
-										thehero.numOfMissiles -= 1
+									thehero.leftPress = False
 
 								elif key == pygame.K_RIGHT:
-									thehero.rightPress = True
-									thehero.direction = E
-									if thehero.shootPress:
-										thehero.shoot()
-									if thehero.missilePress and thehero.numOfMissiles > 0:
-										objs.missiles.append(Missile(ii.next(), screen, thehero,E))
-										thehero.numOfMissiles -= 1
+									thehero.rightPress = False
 
 								elif key == pygame.K_UP:
-									thehero.upPress = True
+									thehero.upPress = False
+
+								elif key == pygame.K_DOWN:
+									thehero.downPress = False
+
+								elif key == pygame.K_a:
+									thehero.missilePress = False
+
+								elif key == pygame.K_s:
+									thehero.shootPress = False
+
+								elif key == pygame.K_d:
+									thehero.blockerPress = False
+
+						else: #altClient == True
+							thehero.altCont = True
+							if not (thehero.missilePress or thehero.shootPress):
+								thehero.shootPress = True
+
+							if down:
+								if not stopwatch.paused:
+									if key == pygame.K_LEFT:
+										thehero.leftPress = True
+										thehero.direction = W
+
+									elif key == pygame.K_RIGHT:
+										thehero.rightPress = True
+										thehero.direction = E
+
+									elif key == pygame.K_UP:
+										thehero.upPress = True
+										thehero.direction = N
+
+									elif key == pygame.K_DOWN:
+										thehero.downPress = True
+										thehero.direction = S
+
+								if key == pygame.K_e:
+									thehero.blockerPress = True
+
+								elif key == pygame.K_SPACE:
+									thehero.shootPress, thehero.missilePress = False, True
+
+								elif key == pygame.K_w:
 									thehero.direction = N
 									if thehero.shootPress:
 										thehero.shoot()
-									if thehero.missilePress and thehero.numOfMissiles > 0:
-										objs.missiles.append(Missile(ii.next(), screen, thehero,N))
+									elif thehero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen, thehero, thehero.direction))
 										thehero.numOfMissiles -= 1
 
-								elif key == pygame.K_DOWN:
-									thehero.downPress = True
+								if key == pygame.K_a:
+									thehero.direction = W
+									if thehero.shootPress:
+										thehero.shoot()
+									elif thehero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen, thehero, thehero.direction))
+										thehero.numOfMissiles -= 1
+
+								elif key == pygame.K_s:
 									thehero.direction = S
 									if thehero.shootPress:
 										thehero.shoot()
-									if thehero.missilePress and thehero.numOfMissiles > 0:
-										objs.missiles.append(Missile(ii.next(), screen,thehero,S))
+									elif thehero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen, thehero, thehero.direction))
 										thehero.numOfMissiles -= 1
 
-							if key == pygame.K_a:
-								thehero.missilePress = True
+								elif key == pygame.K_d:
+									thehero.direction = E
+									if thehero.shootPress:
+										thehero.shoot()
+									elif thehero.numOfMissiles > 0:
+										objs.missiles.append(Missile(ii.next(), screen, thehero, thehero.direction))
+										thehero.numOfMissiles -= 1
+					 
+							else:
+								if key == pygame.K_LEFT:
+									thehero.leftPress = False
 
-							elif key == pygame.K_s:
-								thehero.shootPress = True
+								elif key == pygame.K_RIGHT:
+									thehero.rightPress = False
 
-							elif key == pygame.K_d:
-								thehero.blockerPress = True
-				 
-						else:
-							if key == pygame.K_LEFT:
-								thehero.leftPress = False
+								elif key == pygame.K_UP:
+									thehero.upPress = False
 
-							elif key == pygame.K_RIGHT:
-								thehero.rightPress = False
+								elif key == pygame.K_DOWN:
+									thehero.downPress = False
 
-							elif key == pygame.K_UP:
-								thehero.upPress = False
+								elif key == pygame.K_e:
+									thehero.blockerPress = False
 
-							elif key == pygame.K_DOWN:
-								thehero.downPress = False
-
-							elif key == pygame.K_a:
-								thehero.missilePress = False
-
-							elif key == pygame.K_s:
-								thehero.shootPress = False
-
-							elif key == pygame.K_d:
-								thehero.blockerPress = False
+								elif key == pygame.K_SPACE:
+									thehero.shootPress, thehero.missilePress = True, False
 
 
 
@@ -220,7 +403,7 @@ def start(clients):
 
 
 					#move hero
-					if not thehero.shootPress and not thehero.missilePress:
+					if (not thehero.shootPress and not thehero.missilePress) or thehero.altCont:
 						if thehero.leftPress:
 							thehero.vx -= heroAccel
 						if thehero.rightPress:

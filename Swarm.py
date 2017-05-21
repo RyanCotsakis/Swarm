@@ -67,7 +67,8 @@ class UserInterface(Frame):
 		self.waitingForClients = False
 		self.waitingForHost = False
 		self.numberOfClients = 0
-
+		self.altCont = IntVar()
+		self.altCont.set(False)
 		self.wasAGame = False
 
 		Frame.__init__(self,parent)
@@ -79,6 +80,8 @@ class UserInterface(Frame):
 		self.progress.set("No Progress Loaded")
 		Label(textvariable = self.progress).grid(row = 0, column = 1, rowspan = 2)"""
 
+
+		Checkbutton(text="Alternate Controls", variable=self.altCont).grid(row = 0, columnspan = 3)
 
 		Label(text = "Type IP address of host to join their game").grid(row = 2, column = 0, columnspan = 2)
 
@@ -134,7 +137,7 @@ class UserInterface(Frame):
 			t = threading.Thread(target = clientGame.start, args = (server,))
 			t.start()"""
 			self.parent.destroy()
-			clientGame.start(server)
+			clientGame.start(server, self.altCont.get())
 		else:
 			print "ERROR: Cannot join at this time. Reopen window and try again"
 			sys.stdout.flush()
@@ -190,7 +193,7 @@ class UserInterface(Frame):
 			t.start()
 			self.wasAGame = True"""
 			self.parent.destroy()
-			serverGame.start(clients)
+			serverGame.start(clients, self.altCont.get())
 
 		elif self.waitingForHost:
 			print "ERROR: Host must start the game"

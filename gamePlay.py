@@ -153,7 +153,7 @@ class Hero:
 		self.numOfMissiles = 0
 		self.screen = screen
 		self.client = client
-
+		self.altCont = False
 		self.leftPress = False
 		self.rightPress = False
 		self.upPress = False
