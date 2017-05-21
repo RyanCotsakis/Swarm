@@ -11,6 +11,7 @@ import clientGame
 SENTINEL = -100
 timeoutAfter = 1
 killThreads = False
+VERSION = "2.0.1"
 
 clients = []
 
@@ -38,7 +39,6 @@ class Client():
 			except timeout:
 				pass
 
-
 	def send(self, message):
 		self.sock.send(message)
 
@@ -57,6 +57,41 @@ class Client():
 		self.received = []
 		return toReturn
 
+def intro():
+	print "Welcome to Swarm " + VERSION
+	print "Shoot zombies and don't get killed"
+	print "A game by Ryan Cotsakis"
+	print "\nDefault Controls:"
+	print """
+- Move with the arrow keys
+- Hold (S) to toggle 'shoot mode'
+- When in shoot mode, arrow keys dispence bullets
+- Hold (A) to toggle 'missile mode'
+- When in missile mode, arrow keys dispence missiles
+- Hold (D) to continually place blockers
+- Press (P) to pause, and unpause the game
+"""
+	print "\nAlternate Controls:"
+	print """
+- Move with the arrow keys
+- Shoot with (W), (A), (S), and (D)
+- Hold (SPACE) to toggle 'missile mode'
+- When in missile mode, (W), (A), (S), and (D) dispence missiles
+- Hold (E) to continually place blockers
+- Press (P) to pause, and unpause the game
+"""
+	print "\nSome useful tips:"
+	print """
+- Build a fortress out of blockers in the middle of the map
+- Bullets bounce off of blockers, and the edge of the map
+- Missiles fly over blockers, and can be controlled by player movement
+- Blue zombies are immune to missiles
+- The more yellow a zombie is, the more it avoids bullets (not missiles)
+- Collect the orbs that appear at the start of each level
+- And don't get too close to your own bullets. They will kill you.
+"""
+	print "Good luck!"
+	sys.stdout.flush()
 
 # --- MAIN PROCESS ---
 class UserInterface(Frame):
@@ -73,7 +108,7 @@ class UserInterface(Frame):
 
 		Frame.__init__(self,parent)
 		self.parent = parent
-		self.parent.title("Swarm")
+		self.parent.title("Swarm " + VERSION)
 
 		"""Button(text = "Load Progress", command = self.loadProgress).grid(row = 0, column = 0, rowspan = 2, pady = 10)
 		self.progress = StringVar()
@@ -206,6 +241,7 @@ class UserInterface(Frame):
 if __name__ == '__main__':
 	root = Tk()
 	root.geometry("600x200+100+100")
+	intro()
 	UserInterface(root)
 	root.mainloop()
 	print "Bye Bye"

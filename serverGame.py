@@ -222,7 +222,7 @@ def start(clients, altCont):
 
 							elif event.key == pygame.K_SPACE:
 								hero.shootPress, hero.missilePress = True, False
-								
+
 			else:
 				for event in pygame.event.get():
 					if event.type == pygame.QUIT:
@@ -512,15 +512,17 @@ def start(clients, altCont):
 			screen.fill(BLACK)
 
 			for blocker in objs.blockers:
-				for thehero in objs.heros:
-					if thehero.client != SENTINEL:
-						thehero.client.send("_" + str(BLOCKER) + str(blocker.id).zfill(5) + str(int(blocker.x)).zfill(4) + str(int(blocker.y)).zfill(4) + str(blocker.health).zfill(4) + str(int(blocker.isAlive)))
+				if not (sendAdditionalInfo%7 and blocker.isAlive):
+					for thehero in objs.heros:
+						if thehero.client != SENTINEL:
+							thehero.client.send("_" + str(BLOCKER) + str(blocker.id).zfill(5) + str(int(blocker.x)).zfill(4) + str(int(blocker.y)).zfill(4) + str(blocker.health).zfill(4) + str(int(blocker.isAlive)))
 				blocker.draw()
 
 			for package in objs.packages:
-				for thehero in objs.heros:
-					if thehero.client != SENTINEL:
-						thehero.client.send("_" + str(PACKAGE) + str(package.id).zfill(5) + str(package.x).zfill(4) + str(package.y).zfill(4) + str(int(package.isAlive)))
+				if not (sendAdditionalInfo%11 and package.isAlive):
+					for thehero in objs.heros:
+						if thehero.client != SENTINEL:
+							thehero.client.send("_" + str(PACKAGE) + str(package.id).zfill(5) + str(package.x).zfill(4) + str(package.y).zfill(4) + str(int(package.isAlive)))
 				package.draw()
 
 			for thehero in objs.heros:
@@ -529,9 +531,9 @@ def start(clients, altCont):
 						ahero.client.send("_" + str(HERO) + str(thehero.id).zfill(5) + str(int(thehero.x)).zfill(4) + str(int(thehero.y)).zfill(4) + str(thehero.direction) + str(int(thehero.isAlive)))
 				thehero.draw()
 
-				if thehero.client != SENTINEL and sendAdditionalInfo > 20:
+				if thehero.client != SENTINEL and sendAdditionalInfo > 23:
 					thehero.client.send("_INFO: " + str(thehero.numOfMissiles).zfill(3) + str(thehero.numOfBlockers).zfill(3) + str(zombieCount/zombiesBetweenPackage + 1).zfill(2))
-					sendAdditionalInfo = 0
+					sendAdditionalInfo = 0 #here is where we are resetting sendAdditionalInfo
 
 			for zombie in objs.zombies:
 				for thehero in objs.heros:
@@ -540,15 +542,17 @@ def start(clients, altCont):
 				zombie.draw()
 
 			for missile in objs.missiles:
-				for thehero in objs.heros:
-					if thehero.client != SENTINEL:
-						thehero.client.send("_" + str(MISSILE) + str(missile.id).zfill(5) + str(int(missile.x)).zfill(4) + str(int(missile.y)).zfill(4) + str(missile.direction) + str(int(missile.isAlive)))
+				if not (sendAdditionalInfo%2 and missile.isAlive):
+					for thehero in objs.heros:
+						if thehero.client != SENTINEL:
+							thehero.client.send("_" + str(MISSILE) + str(missile.id).zfill(5) + str(int(missile.x)).zfill(4) + str(int(missile.y)).zfill(4) + str(missile.direction) + str(int(missile.isAlive)))
 				missile.draw()
 
 			for bullet in objs.bullets:
-				for thehero in objs.heros:
-					if thehero.client != SENTINEL:
-						thehero.client.send("_" + str(BULLET) + str(bullet.id).zfill(5) + str(int(bullet.x)).zfill(4) + str(int(bullet.y)).zfill(4) + str(bullet.health).zfill(2) + str(int(bullet.isAlive)))
+				if sendAdditionalInfo%2 or not bullet.isAlive:
+					for thehero in objs.heros:
+						if thehero.client != SENTINEL:
+							thehero.client.send("_" + str(BULLET) + str(bullet.id).zfill(5) + str(int(bullet.x)).zfill(4) + str(int(bullet.y)).zfill(4) + str(bullet.health).zfill(2) + str(int(bullet.isAlive)))
 				bullet.draw()
 
 
