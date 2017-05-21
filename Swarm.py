@@ -11,7 +11,7 @@ import clientGame
 SENTINEL = -100
 timeoutAfter = 1
 killThreads = False
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 
 clients = []
 
@@ -65,9 +65,9 @@ def intro():
 	print """
 - Move with the arrow keys
 - Hold (S) to toggle 'shoot mode'
-- When in shoot mode, arrow keys dispence bullets
+- When in shoot mode, arrow keys dispense bullets
 - Hold (A) to toggle 'missile mode'
-- When in missile mode, arrow keys dispence missiles
+- When in missile mode, arrow keys dispense missiles
 - Hold (D) to continually place blockers
 - Press (P) to pause, and unpause the game
 """
@@ -76,7 +76,7 @@ def intro():
 - Move with the arrow keys
 - Shoot with (W), (A), (S), and (D)
 - Hold (SPACE) to toggle 'missile mode'
-- When in missile mode, (W), (A), (S), and (D) dispence missiles
+- When in missile mode, (W), (A), (S), and (D) dispense missiles
 - Hold (E) to continually place blockers
 - Press (P) to pause, and unpause the game
 """
